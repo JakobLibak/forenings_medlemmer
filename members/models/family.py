@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from django.db import models
-import members.models.person
-import members.models.emailtemplate
 import uuid
+from django.db import models
 from django.urls import reverse
+
+from .person import Person
+import members.models.emailtemplate
 
 
 class Family(models.Model):
@@ -32,7 +31,7 @@ class Family(models.Model):
     def __str__(self):
         return self.email
 
-    def send_link_email(self,):
+    def send_link_email(self):
         members.models.emailtemplate.EmailTemplate.objects.get(idname="LINK").makeEmail(
             self, {}
         )
@@ -41,13 +40,16 @@ class Family(models.Model):
         try:
             parent = self.person_set.filter(
                 membertype__in=(
-                    members.models.person.Person.PARENT,
-                    members.models.person.Person.GUARDIAN,
+                    Person.PARENT,
+                    Person.GUARDIAN,
                 )
             )[0]
         except IndexError:
             return None
         return parent
+
+    def get_children(self):
+        return Person.objects.filter(family=self, membertype=Person.CHILD)
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()

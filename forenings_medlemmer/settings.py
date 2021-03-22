@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import sys
 import logging
 from environs import Env
 import dj_database_url
@@ -20,14 +21,17 @@ from sentry_sdk.integrations.django import DjangoIntegration
 env = Env()
 env.read_env()
 
-if env.str("SENTRY_DSN") != 'not set':
+if env.str("SENTRY_DSN") != "not set":
     sentry_sdk.init(
         dsn=env.str("SENTRY_DSN"),
         integrations=[DjangoIntegration()],
-        environment=env.str("MODE")
+        environment=env.str("MODE"),
     )
 
 logger = logging.getLogger(__name__)
+
+TESTING = os.path.basename(sys.argv[1]) == "test"
+USE_DAWA_ON_SAVE = not TESTING
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -58,7 +62,6 @@ TEMPLATES = [
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-
 SECRET_KEY = env.str("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -71,7 +74,6 @@ else:
 ALLOWED_HOSTS = [host.replace(" ", "") for host in env.list("ALLOWED_HOSTS")]
 BASE_URL = os.environ["BASE_URL"]
 
-# Application definition
 
 INSTALLED_APPS = (
     "bootstrap4",
@@ -84,10 +86,9 @@ INSTALLED_APPS = (
     "members",
     "crispy_forms",
     "django_cron",
-    "flat_responsive",
     "django.contrib.admin",
     "graphene_django",
-    "fontawesome",
+    "django_extensions",
 )
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
@@ -132,9 +133,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-DATE_INPUT_FORMATS = ("%d-%m-%Y", "%d-%m-%y")  # '25-10-06', '25-10-06'
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.7/howto/static-files/
+DATE_INPUT_FORMATS = ("%d/%m/%Y", "%Y-%m-%d")
 
 # How many days is Family data considered valid.
 # After this period an E-mail asking for information
@@ -177,8 +176,8 @@ CRON_CLASSES = [
     #   'members.jobs.RequestConfirmationCronJob',
     "members.jobs.SendActivitySignupConfirmationsCronJob",
     "members.jobs.PollQuickpayPaymentsCronJob",
-    "members.jobs.GenerateStatisticsCronJob",
     "members.jobs.UpdateDawaData",
+    "members.jobs.CaptureOutstandingPayments",
 ]
 
 # Dont keep job logs more than 7 days old
@@ -186,10 +185,18 @@ DJANGO_CRON_DELETE_LOGS_OLDER_THAN = 7
 
 QUICKPAY_API_KEY = os.environ["QUICKPAY_API_KEY"]
 QUICKPAY_PRIVATE_KEY = os.environ["QUICKPAY_PRIVATE_KEY"]
+PAYMENT_ID_PREFIX = env.str("PAYMENT_ID_PREFIX")
+if (
+    PAYMENT_ID_PREFIX != "prod"
+    and len(PAYMENT_ID_PREFIX) < 1
+    or len(PAYMENT_ID_PREFIX) > 3
+):
+    raise EnvironmentError("PAYMENT_ID_PREFIX must be between 1 and 3 chars")
+
+
 SECURE_SSL_REDIRECT = env.bool("FORCE_HTTPS")
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+
 LOGIN_URL = "/account/login/"
-LOGIN_REDIRECT_URL = "/family/"
-TEST_RUNNER = "xmlrunner.extra.djangotestrunner.XMLTestRunner"
-TEST_OUTPUT_DIR = "test-results"
+LOGIN_REDIRECT_URL = "/"

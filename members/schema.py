@@ -4,16 +4,23 @@ from graphene_django.types import DjangoObjectType
 
 from members.models import (
     Department,
+    Address,
     Union,
     DailyStatisticsGeneral,
     DailyStatisticsRegion,
     DailyStatisticsUnion,
 )
+from members.models.statistics import DepartmentStatistics as DepStatModel
 
 
 class StatisticsGeneral(DjangoObjectType):
     class Meta:
         model = DailyStatisticsGeneral
+
+
+class DepartmentStatistics(DjangoObjectType):
+    class Meta:
+        model = DepStatModel
 
 
 class StatisticsRegion(DjangoObjectType):
@@ -29,13 +36,18 @@ class StatisticsUnion(DjangoObjectType):
 class UnionType(DjangoObjectType):
     class Meta:
         model = Union
-        exclude_fields = ("region", "bank_main_org", "bank_account")
+        exclude_fields = ("bank_main_org", "bank_account")
 
 
 class DepartmentType(DjangoObjectType):
     class Meta:
         model = Department
-        # only_fields = ("name", "description")
+
+
+class AddressType(DjangoObjectType):
+    class Meta:
+        model = Address
+        exclude_fields = ("region",)
 
 
 class Query(graphene.ObjectType):
@@ -44,6 +56,10 @@ class Query(graphene.ObjectType):
     general_daily_statistics = graphene.List(StatisticsGeneral)
     union_daily_statistics = graphene.List(StatisticsUnion)
     region_daily_statistics = graphene.List(StatisticsRegion)
+    department_statistics = graphene.List(DepartmentStatistics)
+
+    def resolve_department_statistics(self, info, **kwargs):
+        return DepStatModel.objects.all()
 
     def resolve_general_daily_statistics(self, info, **kwargs):
         return DailyStatisticsGeneral.objects.all()
@@ -58,7 +74,9 @@ class Query(graphene.ObjectType):
         return Union.objects.all()
 
     def resolve_departments(self, info, **kwargs):
-        return Department.objects.all()
+        return filter(
+            lambda dep: dep.address.region != "", Department.get_open_departments()
+        )
 
 
 schema = graphene.Schema(query=Query)
