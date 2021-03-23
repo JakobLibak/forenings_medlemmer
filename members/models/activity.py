@@ -8,12 +8,12 @@ class Activity(models.Model):
     class Meta:
         verbose_name = "Aktivitet"
         verbose_name_plural = "Aktiviteter"
-        ordering = ["department__address__zipcode", "start_date"]
+        ordering = ["-start_date", "department__address__zipcode"]
 
-    department = models.ForeignKey("Department", on_delete=models.CASCADE)
+    department = models.ForeignKey("Department", on_delete=models.CASCADE, verbose_name='Afdeling')
     union = models.ForeignKey("Union", blank=True, on_delete=models.CASCADE, default=1)
     name = models.CharField("Navn", max_length=200)
-    activitytype = models.ForeignKey("ActivityType", on_delete=models.CASCADE, default=1)
+    activitytype = models.ForeignKey("ActivityType", on_delete=models.CASCADE, default=1, verbose_name='Aktivitetstype')
     open_hours = models.CharField("Tidspunkt", max_length=200)
     responsible_name = models.CharField("Ansvarlig", max_length=200)
     responsible_contact = models.EmailField("E-mail")
