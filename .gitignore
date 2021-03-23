@@ -8,3 +8,6 @@ members/static/members/css
 .sass-cache/
 public_data.zip
 test-screens
+Lib
+Scripts
+pyvenv.cfg
