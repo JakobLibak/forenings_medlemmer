@@ -21,7 +21,7 @@ def Membership(request):
         open_invite=True, signup_closing__gte=timezone.now()
     ).order_by("zipcode").exclude(activitytype=2)
     membership_activities = Activity.objects.filter(
-        activitytype=3, signup_closing__gte=timezone.now()
+        activitytype=1, signup_closing__gte=timezone.now()
     ).order_by("zipcode")
     participating = ActivityParticipant.objects.filter(
         member__person__family=family
@@ -56,4 +56,4 @@ def Membership(request):
         "participating": participating,
         "open_activities": open_activities_with_persons,
     }
-    return render(request, "members/activities.html", context)
+    return render(request, "members/membership.html", context)
