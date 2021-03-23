@@ -12,14 +12,14 @@ from members.utils.user import user_to_person, has_user
 
 @login_required
 @user_passes_test(has_user, "/admin_signup/")
-def Activities(request):
+def Membership(request):
     family = user_to_person(request.user).family
     invites = ActivityInvite.objects.filter(
         person__family=family, expire_dtm__gte=timezone.now(), rejected_dtm=None
     )
     open_activities = Activity.objects.filter(
         open_invite=True, signup_closing__gte=timezone.now()
-    ).order_by("zipcode").exclude(activitytype=3)
+    ).order_by("zipcode").exclude(activitytype=2)
     membership_activities = Activity.objects.filter(
         activitytype=3, signup_closing__gte=timezone.now()
     ).order_by("zipcode")
