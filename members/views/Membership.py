@@ -14,6 +14,7 @@ from members.utils.user import user_to_person, has_user
 def Membership(request):
     family = user_to_person(request.user).family
     membership_activities = Activity.objects.filter(
+        signup_closing__gte=timezone.now(),
         activitytype__in=["FORENINGSMEDLEMSKAB"],
     ).order_by("zipcode")
     participating = ActivityParticipant.objects.filter(
@@ -39,7 +40,7 @@ def Membership(request):
                 {
                     "id": curActivity.id,
                     "name": curActivity.name,
-                    "department": curActivity.department,
+                    "union": curActivity.union,
                     "persons": applicablePersons,
                 }
             )
